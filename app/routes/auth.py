@@ -3,7 +3,7 @@ from flask import Blueprint, request, jsonify
 from app import db
 from app.models.user import User, DiveOperatorDocument, UserRole, VerificationStatus
 from app.utils.jwt_helper import generate_tokens, decode_token, jwt_required
-from app.utils.file_helper import save_document
+from app.utils.file_helper import save_document, delete_document_file
 
 auth_bp = Blueprint("auth", __name__)
 
@@ -91,7 +91,19 @@ def _signup_dive_operator(first_name: str, last_name: str, email: str, password:
     try:
         cert_info = save_document(cert_file, "certification")
     except ValueError as e:
+        delete_document_file(bir_info["file_path"])
         return jsonify({"error": f"Certification document: {str(e)}"}), 400
+
+    # Check for duplicate certification hash
+    existing_cert = DiveOperatorDocument.query.filter_by(
+        doc_type="certification", 
+        file_hash=cert_info["file_hash"]
+    ).first()
+
+    if existing_cert:
+        delete_document_file(bir_info["file_path"])
+        delete_document_file(cert_info["file_path"])
+        return jsonify({"error": "This certification document has already been used for registration."}), 409
 
     user = User(
         first_name=first_name,   

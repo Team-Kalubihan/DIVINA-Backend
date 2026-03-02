@@ -1,5 +1,6 @@
 import os
 import uuid
+import hashlib
 from werkzeug.utils import secure_filename
 from flask import current_app
 
@@ -11,10 +12,22 @@ def allowed_file(filename: str) -> bool:
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
+def compute_file_hash(file) -> str:
+    """Compute SHA256 hash of a file-like object."""
+    sha256_hash = hashlib.sha256()
+    # Ensure we are at the beginning of the file
+    file.seek(0)
+    for byte_block in iter(lambda: file.read(4096), b""):
+        sha256_hash.update(byte_block)
+    # Reset file pointer after reading
+    file.seek(0)
+    return sha256_hash.hexdigest()
+
+
 def save_document(file, doc_type: str) -> dict:
     """
     Validate and save an uploaded document file.
-    Returns a dict with stored_filename, file_path, file_size, mime_type.
+    Returns a dict with stored_filename, file_path, file_size, mime_type, file_hash.
     Raises ValueError on invalid files.
     """
     if not file or not file.filename:
@@ -23,7 +36,9 @@ def save_document(file, doc_type: str) -> dict:
     if not allowed_file(file.filename):
         raise ValueError(f"Invalid file type. Allowed: {', '.join(ALLOWED_EXTENSIONS).upper()}")
 
-    # Read content to check size
+    # Compute hash and size
+    file_hash = compute_file_hash(file)
+    
     file.seek(0, os.SEEK_END)
     file_size = file.tell()
     file.seek(0)
@@ -46,6 +61,7 @@ def save_document(file, doc_type: str) -> dict:
         "stored_filename": stored_filename,
         "file_path": file_path,
         "file_size": file_size,
+        "file_hash": file_hash,
         "mime_type": file.mimetype or "application/octet-stream",
     }
 
