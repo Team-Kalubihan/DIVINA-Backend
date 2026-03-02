@@ -88,6 +88,7 @@ class DiveOperatorDocument(db.Model):
     stored_filename = db.Column(db.String(255), nullable=False)
     file_path = db.Column(db.String(500), nullable=False)
     file_size = db.Column(db.Integer, nullable=True)
+    file_hash = db.Column(db.String(64), nullable=True, index=True)
     mime_type = db.Column(db.String(100), nullable=True)
     uploaded_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
@@ -97,6 +98,7 @@ class DiveOperatorDocument(db.Model):
             "doc_type": self.doc_type,
             "original_filename": self.original_filename,
             "file_size": self.file_size,
+            "file_hash": self.file_hash,
             "mime_type": self.mime_type,
             "uploaded_at": self.uploaded_at.isoformat(),
         }
