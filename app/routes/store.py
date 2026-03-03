@@ -370,14 +370,22 @@ def update_schedule(store_id, schedule_id):
         return jsonify({"error": "end_time must be after start_time"}), 400
     if "price" in data:
         try:
-            schedule.price = float(data["price"])
+            new_price = float(data["price"])
         except (ValueError, TypeError):
             return jsonify({"error": "Invalid price value"}), 400
+        if new_price < 0:
+            return jsonify({"error": "Price must be non-negative"}), 400
+        schedule.price = new_price
     if "max_slots" in data:
         try:
-            schedule.max_slots = int(data["max_slots"])
+            new_max_slots = int(data["max_slots"])
         except (ValueError, TypeError):
             return jsonify({"error": "Invalid max_slots value"}), 400
+        if new_max_slots < 1:
+            return jsonify({"error": "max_slots must be at least 1"}), 400
+        if new_max_slots < getattr(schedule, "booked_slots", 0):
+            return jsonify({"error": "max_slots cannot be less than currently booked slots"}), 400
+        schedule.max_slots = new_max_slots
 
     db.session.commit()
     return jsonify({
