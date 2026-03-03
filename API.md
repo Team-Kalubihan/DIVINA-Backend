@@ -20,6 +20,9 @@ Authorization: Bearer <access_token>
 - [Stores](#stores)
 - [Schedules](#schedules)
 - [Bookings](#bookings)
+- [Dive Sites](#dive-sites)
+- [Dive Preferences](#dive-preferences)
+- [Recommendations](#recommendations)
 - [Weather](#weather)
 - [Species Identification](#species-identification)
 - [Error Responses](#error-responses)
@@ -941,6 +944,217 @@ Cancels a booking.
 {
   "message": "Booking cancelled",
   "booking": { ... }
+}
+```
+
+---
+
+## Dive Sites
+
+Dive sites are physical dive locations managed by admins. Public users can browse them; recommendations use them for scoring.
+
+### GET `/api/dive-sites`
+
+List all active dive sites. **Public.**
+
+**Response** `200 OK`:
+
+```json
+{
+  "total": 2,
+  "dive_sites": [
+    {
+      "id": 1,
+      "name": "Coral Garden",
+      "latitude": 10.31,
+      "longitude": 123.97,
+      "marine_biodiversity": 9.0,
+      "difficulty": 2,
+      "photography_score": 9.0,
+      "max_depth": 15.0,
+      "marine_life": ["Turtle", "Anemone"],
+      "crowd_level": 0.2,
+      "is_active": true,
+      "created_at": "2026-01-01T00:00:00"
+    }
+  ]
+}
+```
+
+### GET `/api/dive-sites/<id>`
+
+Get dive site detail. **Public.**
+
+### POST `/api/dive-sites`
+
+Create a dive site. **Admin only.**
+
+```json
+{
+  "name": "Coral Garden",
+  "latitude": 10.31,
+  "longitude": 123.97,
+  "marine_biodiversity": 9.0,
+  "difficulty": 2,
+  "photography_score": 9.0,
+  "max_depth": 15.0,
+  "marine_life": ["Turtle", "Anemone"],
+  "crowd_level": 0.2
+}
+```
+
+| Field | Type | Required | Default |
+|-------|------|----------|---------|
+| `name` | string | ✅ | — |
+| `latitude` | float | ✅ | — |
+| `longitude` | float | ✅ | — |
+| `marine_biodiversity` | float (0–10) | ❌ | `5.0` |
+| `difficulty` | int (1–5) | ❌ | `3` |
+| `photography_score` | float (0–10) | ❌ | `5.0` |
+| `max_depth` | float (meters) | ❌ | `20.0` |
+| `marine_life` | list\|string | ❌ | `[]` |
+| `crowd_level` | float (0–1) | ❌ | `0.5` |
+
+### PUT `/api/dive-sites/<id>`
+
+Update a dive site. **Admin only.** Accepts any subset of the POST fields.
+
+### DELETE `/api/dive-sites/<id>`
+
+Deactivate a dive site (soft delete). **Admin only.**
+
+### POST `/api/stores/<id>/dive-sites`
+
+Link a dive site to a store. **Store owner or admin.**
+
+```json
+{ "dive_site_id": 1 }
+```
+
+### DELETE `/api/stores/<id>/dive-sites/<site_id>`
+
+Unlink a dive site from a store. **Store owner or admin.**
+
+---
+
+## Dive Preferences
+
+User dive preferences are used by the recommendation engine. One set per user, created/updated via upsert.
+
+### GET `/api/profile/preferences`
+
+Get the current user's dive preferences. **Auth required.**
+
+**Response** `200 OK`:
+
+```json
+{
+  "preferences": {
+    "skill_level": 3,
+    "preferred_marine_life": ["Turtle", "Ray"],
+    "photography_priority": 8.0,
+    "depth_preference": 20.0,
+    "max_travel_distance": 50.0,
+    "requires_rental": true,
+    "requires_nitrox": false,
+    "requires_training": false,
+    "is_tech_diver": false,
+    "preferred_price_level": 2,
+    "updated_at": "2026-01-01T00:00:00"
+  }
+}
+```
+
+Returns `404` if preferences have not been set yet.
+
+### PUT `/api/profile/preferences`
+
+Create or update dive preferences (upsert). **Auth required.** Accepts any subset of fields.
+
+```json
+{
+  "skill_level": 3,
+  "preferred_marine_life": ["Turtle", "Ray"],
+  "photography_priority": 8.0,
+  "depth_preference": 20.0,
+  "max_travel_distance": 50.0,
+  "requires_rental": true,
+  "requires_nitrox": false,
+  "requires_training": false,
+  "is_tech_diver": false,
+  "preferred_price_level": 2
+}
+```
+
+| Field | Type | Range |
+|-------|------|-------|
+| `skill_level` | int | 1–5 |
+| `preferred_marine_life` | list of strings | — |
+| `photography_priority` | float | 0–10 |
+| `depth_preference` | float (meters) | — |
+| `max_travel_distance` | float (km) | — |
+| `requires_rental` | boolean | — |
+| `requires_nitrox` | boolean | — |
+| `requires_training` | boolean | — |
+| `is_tech_diver` | boolean | — |
+| `preferred_price_level` | int or null | 1–4 |
+
+---
+
+## Recommendations
+
+The recommendation engine scores dive sites and shops based on the user's preferences, live weather conditions, and distance. Powered by `divina-recommender`.
+
+### GET `/api/recommend/sites?lat=<float>&lng=<float>`
+
+Get ranked dive site recommendations. **Auth required.** User must have preferences set.
+
+| Param | Type | Required | Description |
+|-------|------|----------|-------------|
+| `lat` | float | ✅ | User's current latitude |
+| `lng` | float | ✅ | User's current longitude |
+
+**Response** `200 OK`:
+
+```json
+{
+  "total": 2,
+  "recommendations": [
+    {
+      "site_id": "1",
+      "site_name": "Coral Garden",
+      "total_score": 0.8234,
+      "breakdown": {
+        "environmental": 0.85,
+        "user_preferences": 0.78,
+        "crowd_optimization": 0.90
+      }
+    }
+  ]
+}
+```
+
+### GET `/api/recommend/shops?lat=<float>&lng=<float>`
+
+Get ranked dive shop recommendations. **Auth required.** User must have preferences set.
+
+| Param | Type | Required | Description |
+|-------|------|----------|-------------|
+| `lat` | float | ✅ | User's current latitude |
+| `lng` | float | ✅ | User's current longitude |
+
+**Response** `200 OK`:
+
+```json
+{
+  "total": 1,
+  "recommendations": [
+    {
+      "shop_id": "1",
+      "shop_name": "Blue Sea Divers",
+      "total_score": 0.7542
+    }
+  ]
 }
 ```
 

@@ -1,0 +1,22 @@
+meta {
+  name: Update Dive Site
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{base_url}}/api/dive-sites/1
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+body:json {
+  {
+    "crowd_level": 0.4,
+    "photography_score": 8.5
+  }
+}

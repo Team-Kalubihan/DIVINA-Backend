@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify
 from app import db
 from app.models.user import User, VerificationStatus
+from app.models.user_preferences import UserDivePreferences
 from app.utils.jwt_helper import jwt_required
 
 protected_bp = Blueprint("protected", __name__)
@@ -101,3 +102,64 @@ def operator_dashboard():
         "verified_at": user.verified_at.isoformat() if user.verified_at else None,
         "documents": [doc.to_dict() for doc in user.documents],
     }), 200
+
+
+# ---------------------------------------------------------------------------
+# DIVE PREFERENCES
+# ---------------------------------------------------------------------------
+
+@protected_bp.route("/profile/preferences", methods=["GET"])
+@jwt_required
+def get_preferences():
+    prefs = request.current_user.dive_preferences
+    if not prefs:
+        return jsonify({"error": "Dive preferences not set"}), 404
+    return jsonify({"preferences": prefs.to_dict()}), 200
+
+
+@protected_bp.route("/profile/preferences", methods=["PUT"])
+@jwt_required
+def update_preferences():
+    user = request.current_user
+    data = request.get_json() or {}
+
+    prefs = user.dive_preferences
+    if not prefs:
+        prefs = UserDivePreferences(user_id=user.id)
+        db.session.add(prefs)
+
+    if "skill_level" in data:
+        sl = int(data["skill_level"])
+        if sl < 1 or sl > 5:
+            return jsonify({"error": "skill_level must be 1–5"}), 400
+        prefs.skill_level = sl
+    if "preferred_marine_life" in data:
+        ml = data["preferred_marine_life"]
+        prefs.preferred_marine_life = ",".join(ml) if isinstance(ml, list) else str(ml)
+    if "photography_priority" in data:
+        pp = float(data["photography_priority"])
+        if pp < 0 or pp > 10:
+            return jsonify({"error": "photography_priority must be 0–10"}), 400
+        prefs.photography_priority = pp
+    if "depth_preference" in data:
+        prefs.depth_preference = float(data["depth_preference"])
+    if "max_travel_distance" in data:
+        prefs.max_travel_distance = float(data["max_travel_distance"])
+    if "requires_rental" in data:
+        prefs.requires_rental = bool(data["requires_rental"])
+    if "requires_nitrox" in data:
+        prefs.requires_nitrox = bool(data["requires_nitrox"])
+    if "requires_training" in data:
+        prefs.requires_training = bool(data["requires_training"])
+    if "is_tech_diver" in data:
+        prefs.is_tech_diver = bool(data["is_tech_diver"])
+    if "preferred_price_level" in data:
+        pl = data["preferred_price_level"]
+        if pl is not None:
+            pl = int(pl)
+            if pl < 1 or pl > 4:
+                return jsonify({"error": "preferred_price_level must be 1–4"}), 400
+        prefs.preferred_price_level = pl
+
+    db.session.commit()
+    return jsonify({"message": "Preferences updated", "preferences": prefs.to_dict()}), 200

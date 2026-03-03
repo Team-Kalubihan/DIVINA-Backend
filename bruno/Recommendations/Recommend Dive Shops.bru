@@ -1,0 +1,20 @@
+meta {
+  name: Recommend Dive Shops
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{base_url}}/api/recommend/shops?lat=10.3157&lng=123.9750
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+params:query {
+  lat: 10.3157
+  lng: 123.9750
+}

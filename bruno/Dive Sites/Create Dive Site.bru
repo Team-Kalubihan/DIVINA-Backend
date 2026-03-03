@@ -1,0 +1,29 @@
+meta {
+  name: Create Dive Site
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{base_url}}/api/dive-sites
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+body:json {
+  {
+    "name": "Coral Garden",
+    "latitude": 10.31,
+    "longitude": 123.97,
+    "marine_biodiversity": 9.0,
+    "difficulty": 2,
+    "photography_score": 9.0,
+    "max_depth": 15.0,
+    "marine_life": ["Turtle", "Anemone"],
+    "crowd_level": 0.2
+  }
+}

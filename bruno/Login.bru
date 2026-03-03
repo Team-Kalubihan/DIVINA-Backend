@@ -17,6 +17,8 @@ body:json {
   }
 }
 
-vars:pre-request {
-  base_url: 127.0.0.1:5000
+script:post-response {
+  if (res.status === 200) {
+    bru.setEnvVar("access_token", res.body.access_token);
+  }
 }

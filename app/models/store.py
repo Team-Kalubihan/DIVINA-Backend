@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
 from app import db
+from app.models.dive_site import store_dive_sites
 
 class Store(db.Model):
     __tablename__ = "stores"
@@ -24,6 +25,16 @@ class Store(db.Model):
 
     type = db.Column(db.String(50), nullable=False)#popular or not  
 
+    # Dive-shop recommendation fields
+    rating = db.Column(db.Float, nullable=True)
+    price_level = db.Column(db.Integer, nullable=True)
+    has_rental = db.Column(db.Boolean, default=False)
+    has_nitrox = db.Column(db.Boolean, default=False)
+    has_training = db.Column(db.Boolean, default=False)
+    is_tech_friendly = db.Column(db.Boolean, default=False)
+
+    dive_sites = db.relationship("DiveSite", secondary=store_dive_sites, back_populates="stores")
+
     def to_dict(self, include_schedules=False):
         data = {
             "id": self.id,
@@ -37,7 +48,14 @@ class Store(db.Model):
             "owner_id": self.owner_id,
             "owner": self.owner.full_name if self.owner else None,
             "created_at": self.created_at.isoformat(),
-            "type": self.type
+            "type": self.type,
+            "rating": self.rating,
+            "price_level": self.price_level,
+            "has_rental": self.has_rental,
+            "has_nitrox": self.has_nitrox,
+            "has_training": self.has_training,
+            "is_tech_friendly": self.is_tech_friendly,
+            "dive_site_ids": [s.id for s in self.dive_sites],
         }
 
         if include_schedules:

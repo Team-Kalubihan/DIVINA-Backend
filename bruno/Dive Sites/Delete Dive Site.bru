@@ -1,0 +1,15 @@
+meta {
+  name: Delete Dive Site
+  type: http
+  seq: 5
+}
+
+delete {
+  url: {{base_url}}/api/dive-sites/1
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
