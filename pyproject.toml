@@ -12,6 +12,7 @@ dependencies = [
     "pydantic>=2.12.5",
     "pyjwt==2.9.0",
     "python-dotenv==1.0.1",
+    "requests==2.32.3",
     "sqlalchemy==2.0.36",
 ]
 
