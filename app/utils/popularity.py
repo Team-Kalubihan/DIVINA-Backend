@@ -10,7 +10,7 @@ Environment variable:
 """
 
 import os
-from flask import requests
+import requests
 
 GOOGLE_API_KEY = os.environ.get("GOOGLE_MAPS_API_KEY", "")
 
