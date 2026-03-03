@@ -457,3 +457,4 @@ booking = requests.post(f"{BASE_URL}/bookings", headers=headers, json={
 - File uploads (dive operator documents) are stored in the `uploads/` directory.
 - The iNaturalist API is rate-limited to 60 requests/minute — the identify endpoint makes 1 request per call.
 - WeatherAPI.com free tier allows up to 1,000,000 calls/month.
+- The recommendation engine fetches live marine weather for each dive site at request time, so recommendation calls may take a few seconds depending on the number of sites.

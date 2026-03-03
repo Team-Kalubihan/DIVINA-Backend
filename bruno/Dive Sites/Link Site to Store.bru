@@ -1,0 +1,21 @@
+meta {
+  name: Link Site to Store
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{base_url}}/api/stores/1/dive-sites
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+body:json {
+  {
+    "dive_site_id": 1
+  }
+}

@@ -1,0 +1,30 @@
+meta {
+  name: Update Preferences
+  type: http
+  seq: 2
+}
+
+put {
+  url: {{base_url}}/api/profile/preferences
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+body:json {
+  {
+    "skill_level": 3,
+    "preferred_marine_life": ["Turtle", "Ray"],
+    "photography_priority": 8.0,
+    "depth_preference": 20.0,
+    "max_travel_distance": 50.0,
+    "requires_rental": true,
+    "requires_nitrox": false,
+    "requires_training": false,
+    "is_tech_diver": false,
+    "preferred_price_level": 2
+  }
+}
